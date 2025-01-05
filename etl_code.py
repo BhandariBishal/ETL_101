@@ -1,5 +1,6 @@
 import glob 
 import pandas as pd 
+import xml.etree.ElementTree as ET 
 from datetime import datetime 
 
 log_file = "log_file.txt" 
@@ -11,21 +12,29 @@ def extract_from_csv(csv_file):
 def extract_from_json(json_file):
     return pd.read_json(json_file, lines = True)
 
-def extract_from_xml(xml_file):
-    return pd.read_xml(xml_file)
+def extract_from_xml(file_to_process): 
+    dataframe = pd.DataFrame(columns=["name", "height", "weight"]) 
+    tree = ET.parse(file_to_process) 
+    root = tree.getroot() 
+    for person in root: 
+        name = person.find("name").text 
+        height = float(person.find("height").text) 
+        weight = float(person.find("weight").text) 
+        dataframe = pd.concat([dataframe, pd.DataFrame([{"name":name, "height":height, "weight":weight}])], ignore_index=True) 
+    return dataframe
 
-def extreact():
+def extract():
     extracted_data = pd.DataFrame(columns=['name','height','weight'])
 
     #process all csv files
     for csv_file in glob.glob("*.csv"):
-        extreacted_data = pd.concat([extracted_data, extract_from_csv(csv_file)], ignore_index = True)
+        extracted_data = pd.concat([extracted_data, extract_from_csv(csv_file)], ignore_index = True)
 
     for json_file in glob.glob("*.json"):
-        extreacted_data = pd.concat([extracted_data, extract_from_json(json_file)], ignore_index = True)
+        extracted_data = pd.concat([extracted_data, extract_from_json(json_file)], ignore_index = True)
 
     for xml_file in glob.glob("*.xml"):
-        extreacted_data = pd.concat([extracted_data, extract_from_xml(xml_file)], ignore_index = True)
+        extracted_data = pd.concat([extracted_data, extract_from_xml(xml_file)], ignore_index = True)
 
     return extracted_data
 
